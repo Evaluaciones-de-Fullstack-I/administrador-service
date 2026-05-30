@@ -3,7 +3,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-
+import cl.duoc.administrador.mapper.AdminMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -20,6 +20,8 @@ import jakarta.validation.Valid;
 import cl.duoc.administrador.dto.CreateRequestAdmin;
 import cl.duoc.administrador.model.Admin;
 import cl.duoc.administrador.service.AdminService;
+import cl.duoc.administrador.dto.UpdateRequestAdmin;
+import cl.duoc.administrador.exception.ResourceNotFoundException;
 
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -28,8 +30,15 @@ import cl.duoc.administrador.service.AdminService;
 public class AdminController {
 
 private final AdminService adminService;
-private final WebClient   webClient;
+private final WebClient  webClient;
 
+public AdminController(
+        AdminService adminService,
+        WebClient webClient
+) {
+    this.adminService = adminService;
+    this.webClient = webClient;
+}
 
 ///Endpoint CRUD 
 
@@ -178,30 +187,6 @@ public ResponseEntity<Map<String, Object>> obtenerReporteSemanal() {
 
     return ResponseEntity.ok(response);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 }

@@ -2,6 +2,7 @@ package cl.duoc.administrador.service;
 import java.util.List;
 import java.util.Optional;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.springframework.stereotype.Service;
@@ -80,15 +81,48 @@ public class AdminService {
 
 
 // APROBAR VENDEDOR
+public void aprobarVendedor(int id) {
 
-public void aprobarVendedor(int vendedorId) {
+    Admin admin = adminRepository.findById(id)
+            .orElseThrow(() ->
+                    new ResourceNotFoundException("Administrador no encontrado"));
 
-    webClient.put()
-            .uri("http://localhost:8082/api/v1/vendedores/"
-                    + vendedorId + "/aprobar")
-            .retrieve()
-            .bodyToMono(Void.class)
-            .block();
+    admin.setActivo(true);
+    adminRepository.save(admin);
+}
+//rechazar
+
+public void rechazarVendedor(int id) {
+
+    Admin admin = adminRepository.findById(id)
+            .orElseThrow(() ->
+                    new ResourceNotFoundException("Administrador no encontrado"));
+
+    admin.setActivo(false);
+    adminRepository.save(admin);
+}
+
+public List<String> obtenerReclamos() {
+
+    List<String> reclamos = new ArrayList<>();
+
+    reclamos.add("Pedido llegó tarde");
+    reclamos.add("Producto defectuoso");
+    reclamos.add("Cliente reporta error en pago");
+    reclamos.add("Producto no recibido");
+
+    return reclamos;
+}
+
+public Map<String, Object> obtenerReporteSemanal() {
+
+    Map<String, Object> reporte = new HashMap<>();
+
+    reporte.put("ventas", 150);
+    reporte.put("ingresos", 750000);
+    reporte.put("nuevosUsuarios", 32);
+
+    return reporte;
 }
 
 }
