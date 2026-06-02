@@ -6,6 +6,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class WebClientConfig {
    @Bean
     public WebClient pokeApiWebClient(WebClient.Builder builder) {
-        return builder.baseUrl(" url..").build();
+        return builder.baseUrl("http://localhost:8083").build();
     }
 }

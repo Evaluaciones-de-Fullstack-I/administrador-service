@@ -81,25 +81,31 @@ public class AdminService {
 
 
 // APROBAR VENDEDOR
-public void aprobarVendedor(int id) {
 
-    Admin admin = adminRepository.findById(id)
-            .orElseThrow(() ->
-                    new ResourceNotFoundException("Administrador no encontrado"));
+public void aprobarVendedor(Integer id) {
+    System.out.println("📤 ADMIN enviando ID: " + id);
 
-    admin.setActivo(true);
-    adminRepository.save(admin);
+    webClient.put()
+        .uri("http://localhost:8083/api/v1/vendedores/aprobar/{id}", id)
+        .retrieve()
+        .bodyToMono(Void.class)
+        .block();
+
+    System.out.println("📨 ADMIN respuesta recibida");
 }
+
 //rechazar
+public void rechazarVendedor(Integer id) {
 
-public void rechazarVendedor(int id) {
+    System.out.println("📤 ADMIN rechazando VENDEDOR ID: " + id);
 
-    Admin admin = adminRepository.findById(id)
-            .orElseThrow(() ->
-                    new ResourceNotFoundException("Administrador no encontrado"));
+    webClient.put()
+            .uri("http://localhost:8083/api/v1/vendedores/rechazar/{id}", id)
+            .retrieve()
+            .bodyToMono(Void.class)
+            .block();
 
-    admin.setActivo(false);
-    adminRepository.save(admin);
+    System.out.println("📨 ADMIN recibió respuesta de rechazo");
 }
 
 public List<String> obtenerReclamos() {

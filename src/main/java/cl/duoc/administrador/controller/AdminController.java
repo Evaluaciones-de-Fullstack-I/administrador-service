@@ -187,6 +187,25 @@ public ResponseEntity<Map<String, Object>> obtenerReporteSemanal() {
 
     return ResponseEntity.ok(response);
 }
+// Endpoint demostrativo de WebClient para aprobar vendedor desde otro servicio 
+ public void aprobarVendedor(Integer id) {
+
+    System.out.println("📤 ADMIN: enviando solicitud al vendedor ID " + id);
+
+    try {
+        webClient.put()
+                .uri("http://localhost:8083/api/v1/vendedores/aprobar/{id}", id)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .block();
+
+        System.out.println("📨 ADMIN: respuesta recibida del vendedor");
+
+    } catch (Exception e) {
+        System.out.println("❌ ERROR comunicando con VENDEDOR: " + e.getMessage());
+        throw new RuntimeException("Error al aprobar vendedor");
+    }
+}
 
 
 }
