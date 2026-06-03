@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
 import jakarta.validation.Valid;
+import reactor.core.publisher.Mono;
 import cl.duoc.administrador.dto.CreateRequestAdmin;
 import cl.duoc.administrador.model.Admin;
 import cl.duoc.administrador.service.AdminService;
@@ -187,25 +188,29 @@ public ResponseEntity<Map<String, Object>> obtenerReporteSemanal() {
 
     return ResponseEntity.ok(response);
 }
-// Endpoint demostrativo de WebClient para aprobar vendedor desde otro servicio 
+// Endpoint de administrador que llama a vendedor :  PUT http://localhost:8082/api/v1/admin/vendedores/1/aprobar
  public void aprobarVendedor(Integer id) {
 
-    System.out.println("📤 ADMIN: enviando solicitud al vendedor ID " + id);
+    System.out.println("ADMIN: enviando solicitud al vendedor ID " + id);
+webClient.put()
+    .uri("http://localhost:8083/api/v1/vendedores/aprobar/{id}", id)
+    .retrieve()
+    .onStatus(status -> status.is4xxClientError(), response ->
+            response.bodyToMono(String.class)
+                    .flatMap(msg -> Mono.error(
+                            new ResourceNotFoundException(msg)
+                    ))
+    )
+    .onStatus(status -> status.is5xxServerError(), response ->
+            response.bodyToMono(String.class)
+                    .flatMap(msg -> Mono.error(
+                            new RuntimeException(msg)
+                    ))
+    )
+    .bodyToMono(Void.class)
+    .block();
+    
+//PUT http://localhost:8082/api/v1/admin/vendedores/1/rechazar
 
-    try {
-        webClient.put()
-                .uri("http://localhost:8083/api/v1/vendedores/aprobar/{id}", id)
-                .retrieve()
-                .bodyToMono(Void.class)
-                .block();
-
-        System.out.println("📨 ADMIN: respuesta recibida del vendedor");
-
-    } catch (Exception e) {
-        System.out.println("❌ ERROR comunicando con VENDEDOR: " + e.getMessage());
-        throw new RuntimeException("Error al aprobar vendedor");
-    }
 }
-
-
 }
