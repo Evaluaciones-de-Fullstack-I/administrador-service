@@ -132,31 +132,39 @@ public ResponseEntity<Map<String, String>> eliminarAdmin(
 
 //endpoint DE HISTRIASDE USUARIOS---------------
 
-// APROBAR VENDEDOR
-
+// APROBAR VENDEDOR con observaciones
 @PutMapping("/vendedores/{id}/aprobar")
 public ResponseEntity<Map<String, String>> aprobarVendedor(
-        @PathVariable int id
+        @PathVariable int id,
+        @RequestBody Map<String, String> request // ◄--- Agregado para capturar el JSON de Postman
 ) {
-
-    adminService.aprobarVendedor(id);
+    // Si en Postman no escribes nada, usará este texto por defecto
+    String observaciones = request != null ? request.getOrDefault("observaciones", "Sin observaciones de administración") : "Aprobado";
+    
+    // Llamamos al método del servicio pasándole la observación
+    adminService.aprobarVendedorConObservaciones(id, observaciones);
 
     Map<String, String> response = new HashMap<>();
-    response.put("mensaje", "Vendedor aprobado correctamente");
+    response.put("mensaje", "Proceso de aprobación enviado correctamente");
+    response.put("observaciones", observaciones);
 
     return ResponseEntity.ok(response);
 }
+
 //endpoint de rechazar 
 
 @PutMapping("/vendedores/{id}/rechazar")
 public ResponseEntity<Map<String, String>> rechazarVendedor(
-        @PathVariable int id
+        @PathVariable int id,
+        @RequestBody Map<String, String> request // ◄--- Agregado para capturar el JSON de Postman
 ) {
-
-    adminService.rechazarVendedor(id);
+    String observaciones = request != null ? request.getOrDefault("observaciones", "Sin observaciones de administración") : "Rechazado";
+    
+    adminService.rechazarVendedorConObservaciones(id, observaciones);
 
     Map<String, String> response = new HashMap<>();
-    response.put("mensaje", "Vendedor rechazado correctamente");
+    response.put("mensaje", "Proceso de rechazo enviado correctamente");
+    response.put("observaciones", observaciones);
 
     return ResponseEntity.ok(response);
 }

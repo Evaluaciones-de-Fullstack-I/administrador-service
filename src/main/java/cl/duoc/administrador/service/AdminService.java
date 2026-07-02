@@ -81,31 +81,37 @@ public class AdminService {
 
 
 // APROBAR VENDEDOR
-
-public void aprobarVendedor(Integer id) {
-    System.out.println("📤 ADMIN enviando ID: " + id);
+public void aprobarVendedorConObservaciones(Integer id, String observaciones) {
+    System.out.println("ADMIN: enviando solicitud de aprobación al vendedor ID " + id);
+    
+    // Creamos un mapa para empaquetar la observación en un JSON
+    Map<String, String> requestBody = new HashMap<>();
+    requestBody.put("observaciones", observaciones);
 
     webClient.put()
-        .uri("http://localhost:8083/api/v1/vendedores/aprobar/{id}", id)
+        .uri("http://localhost:8083/api/v1/vendedores/aprobar/{id}", id) // Puerto local del vendedor
+        .bodyValue(requestBody) // ◄--- Enviamos el mapa con la observación
         .retrieve()
         .bodyToMono(Void.class)
         .block();
 
-    System.out.println("📨 ADMIN respuesta recibida");
+    System.out.println(" ADMIN: La solicitud de aprobación para el vendedor ID " + id + " fue enviada con éxito.");
 }
 
 //rechazar
-public void rechazarVendedor(Integer id) {
+public void rechazarVendedorConObservaciones(Integer id, String observaciones) {
 
-    System.out.println("📤 ADMIN rechazando VENDEDOR ID: " + id);
-
+    System.out.println("📤 ADMIN rechazando solicitud del VENDEDOR ID: " + id);
+    Map<String, String> requestBody = new HashMap<>();
+    requestBody.put("observaciones", observaciones);
     webClient.put()
             .uri("http://localhost:8083/api/v1/vendedores/rechazar/{id}", id)
+            .bodyValue(requestBody)
             .retrieve()
             .bodyToMono(Void.class)
             .block();
 
-    System.out.println("📨 ADMIN recibió respuesta de rechazo");
+    System.out.println(" ADMIN:El Vendedor ID " + id + " fue rechazado con éxito .");
 }
 
 public List<String> obtenerReclamos() {
