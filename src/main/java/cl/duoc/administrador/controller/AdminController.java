@@ -24,201 +24,223 @@ import cl.duoc.administrador.service.AdminService;
 import cl.duoc.administrador.dto.UpdateRequestAdmin;
 import cl.duoc.administrador.exception.ResourceNotFoundException;
 
+
+
+// 🟢 IMPORTACIONES DE OPENAPI / SWAGGER
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
 @RestController
 @RequestMapping("/api/v1/admin")
-
-
 public class AdminController {
 
-private final AdminService adminService;
-private final WebClient  webClient;
+    private final AdminService adminService;
+    private final WebClient webClient;
 
-public AdminController(
-        AdminService adminService,
-        WebClient webClient
-) {
-    this.adminService = adminService;
-    this.webClient = webClient;
-}
+    public AdminController(AdminService adminService, WebClient webClient) {
+        this.adminService = adminService;
+        this.webClient = webClient;
+    }
 
-///Endpoint CRUD 
+    // --- ENDPOINTS CRUD BASICOS ---
 
+    // LISTAR ADMINISTRADORES
+    @GetMapping
+    @Operation(summary = "Listar administradores", description = "Recupera una lista con todos los usuarios administradores del sistema.")
+    @ApiResponse(responseCode = "200", description = "Lista de administradores obtenida con éxito")
+    public ResponseEntity<List<Admin>> listarAdmins() {
+        List<Admin> admins = adminService.getAdmins();
+        return ResponseEntity.ok(admins);
+    }
 
-@GetMapping
-public ResponseEntity<List<Admin>> listarAdmins() {
-    List<Admin> admins = adminService.getAdmins();
-    return ResponseEntity.ok(admins);
-}
-// CREAR ADMINISTRADOR
-
-@PostMapping
-public ResponseEntity<Map<String, Object>> agregarAdmin(
+    // CREAR ADMINISTRADOR
+    @PostMapping
+    @Operation(summary = "Crear administrador", description = "Registra un nuevo usuario con privilegios de administración.")
+    @ApiResponse(responseCode = "201", description = "Administrador creado correctamente")
+    @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
+    public ResponseEntity<Map<String, Object>> agregarAdmin(
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "Datos necesarios para registrar un administrador",
+            required = true,
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = CreateRequestAdmin.class),
+                examples = @ExampleObject(
+                    name = "Ejemplo Nuevo Admin",
+                    value = "{\n  \"nombre\": \"Carlos Silva\",\n  \"email\": \"carlos.admin@tienda.cl\",\n  \"rol\": \"SUPER_ADMIN\"\n}"
+                )
+            )
+        )
         @Valid @RequestBody CreateRequestAdmin request
-) {
-
-    Admin nuevoAdmin =
-            adminService.saveAdmin(
-                    AdminMapper.toAdmin(request)
-            );
-
-    Map<String, Object> response = new HashMap<>();
-    response.put("mensaje", "Administrador creado correctamente");
-    response.put("id", nuevoAdmin.getId());
-
-    return ResponseEntity.status(HttpStatus.CREATED).body(response);
-}
-// BUSCAR ADMINISTRADOR POR ID
-
-@GetMapping("/{id}")
-public ResponseEntity<Admin> buscarAdmin(
-        @PathVariable int id
-) {
-
-    Admin admin = adminService.getAdminId(id);
-
-    if (admin == null) {
-        throw new ResourceNotFoundException(
-                "Administrador con id=" + id + " no encontrado"
-        );
+    ) {
+        Admin nuevoAdmin = adminService.saveAdmin(AdminMapper.toAdmin(request));
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", "Administrador creado correctamente");
+        response.put("id", nuevoAdmin.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    return ResponseEntity.ok(admin);
-}
-// ACTUALIZAR ADMINISTRADOR
+    // BUSCAR ADMINISTRADOR POR ID
+    @GetMapping("/{id}")
+    @Operation(summary = "Buscar administrador por ID", description = "Obtiene los detalles del perfil de un administrador usando su ID.")
+    @ApiResponse(responseCode = "200", description = "Administrador encontrado")
+    @ApiResponse(responseCode = "404", description = "Administrador no encontrado")
+    public ResponseEntity<Admin> buscarAdmin(@PathVariable int id) {
+        Admin admin = adminService.getAdminId(id);
+        if (admin == null) {
+            throw new ResourceNotFoundException("Administrador con id=" + id + " no encontrado");
+        }
+        return ResponseEntity.ok(admin);
+    }
 
-@PutMapping("/{id}")
-public ResponseEntity<Map<String, Object>> actualizarAdmin(
+    // ACTUALIZAR ADMINISTRADOR
+    @PutMapping("/{id}")
+    @Operation(summary = "Actualizar administrador", description = "Permite modificar los datos de un administrador existente.")
+    @ApiResponse(responseCode = "200", description = "Administrador actualizado correctamente")
+    @ApiResponse(responseCode = "404", description = "Administrador no encontrado")
+    public ResponseEntity<Map<String, Object>> actualizarAdmin(
         @PathVariable int id,
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "Campos editables del administrador",
+            required = true,
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = UpdateRequestAdmin.class),
+                examples = @ExampleObject(
+                    name = "Ejemplo Modificar Admin",
+                    value = "{\n  \"nombre\": \"Carlos Silva Editado\",\n  \"rol\": \"ADMIN_SOPORTE\"\n}"
+                )
+            )
+        )
         @Valid @RequestBody UpdateRequestAdmin request
-) {
-
-    Admin adminActualizado =
-            adminService.updateAdmin(id, request);
-
-    if (adminActualizado == null) {
-        throw new ResourceNotFoundException(
-                "Administrador con id=" + id + " no encontrado"
-        );
+    ) {
+        Admin adminActualizado = adminService.updateAdmin(id, request);
+        if (adminActualizado == null) {
+            throw new ResourceNotFoundException("Administrador con id=" + id + " no encontrado");
+        }
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", "Administrador actualizado correctamente");
+        response.put("id", adminActualizado.getId());
+        return ResponseEntity.ok(response);
     }
 
-    Map<String, Object> response = new HashMap<>();
-    response.put("mensaje", "Administrador actualizado correctamente");
-    response.put("id", adminActualizado.getId());
-
-    return ResponseEntity.ok(response);
-}
-// ELIMINAR ADMINISTRADOR
-
-@DeleteMapping("/{id}")
-public ResponseEntity<Map<String, String>> eliminarAdmin(
-        @PathVariable int id
-) {
-
-    boolean eliminado = adminService.deleteAdmin(id);
-
-    if (!eliminado) {
-        throw new ResourceNotFoundException(
-                "Administrador con id=" + id + " no encontrado"
-        );
+    // ELIMINAR ADMINISTRADOR
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar administrador", description = "Remueve permanentemente el perfil de administrador del sistema.")
+    @ApiResponse(responseCode = "200", description = "Administrador eliminado correctamente")
+    @ApiResponse(responseCode = "404", description = "Administrador no encontrado")
+    public ResponseEntity<Map<String, String>> eliminarAdmin(@PathVariable int id) {
+        boolean eliminado = adminService.deleteAdmin(id);
+        if (!eliminado) {
+            throw new ResourceNotFoundException("Administrador con id=" + id + " no encontrado");
+        }
+        Map<String, String> response = new HashMap<>();
+        response.put("mensaje", "Administrador eliminado correctamente");
+        return ResponseEntity.ok(response);
     }
 
-    Map<String, String> response = new HashMap<>();
-    response.put("mensaje", "Administrador eliminado correctamente");
 
-    return ResponseEntity.ok(response);
-}
+    // --- ENDPOINTS DE HISTORIAS DE USUARIO ---
 
-
-
-//endpoint DE HISTRIASDE USUARIOS---------------
-
-// APROBAR VENDEDOR con observaciones
-@PutMapping("/vendedores/{id}/aprobar")
-public ResponseEntity<Map<String, String>> aprobarVendedor(
+    // APROBAR VENDEDOR CON OBSERVACIONES
+    @PutMapping("/vendedores/{id}/aprobar")
+    @Operation(summary = "Aprobar postulación de vendedor", description = "Cambia el estado de un vendedor a APROBADO e inyecta las observaciones pertinentes.")
+    @ApiResponse(responseCode = "200", description = "Proceso de aprobación enviado correctamente")
+    public ResponseEntity<Map<String, String>> aprobarVendedor(
         @PathVariable int id,
-        @RequestBody Map<String, String> request // ◄--- Agregado para capturar el JSON de Postman
-) {
-    // Si en Postman no escribes nada, usará este texto por defecto
-    String observaciones = request != null ? request.getOrDefault("observaciones", "Sin observaciones de administración") : "Aprobado";
-    
-    // Llamamos al método del servicio pasándole la observación
-    adminService.aprobarVendedorConObservaciones(id, observaciones);
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "Observaciones opcionales para la aprobación",
+            required = false,
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    name = "Ejemplo Observación Aprobación",
+                    value = "{\n  \"observaciones\": \"Toda la documentación legal está en regla y vigente.\"\n}"
+                )
+            )
+        )
+        @RequestBody(required = false) Map<String, String> request
+    ) {
+        String observaciones = request != null ? request.getOrDefault("observaciones", "Sin observaciones de administración") : "Aprobado";
+        adminService.aprobarVendedorConObservaciones(id, observaciones);
 
-    Map<String, String> response = new HashMap<>();
-    response.put("mensaje", "Proceso de aprobación enviado correctamente");
-    response.put("observaciones", observaciones);
+        Map<String, String> response = new HashMap<>();
+        response.put("mensaje", "Proceso de aprobación enviado correctamente");
+        response.put("observaciones", observaciones);
+        return ResponseEntity.ok(response);
+    }
 
-    return ResponseEntity.ok(response);
-}
-
-//endpoint de rechazar 
-
-@PutMapping("/vendedores/{id}/rechazar")
-public ResponseEntity<Map<String, String>> rechazarVendedor(
+    // RECHAZAR VENDEDOR CON OBSERVACIONES
+    @PutMapping("/vendedores/{id}/rechazar")
+    @Operation(summary = "Rechazar postulación de vendedor", description = "Cambia el estado de un vendedor a RECHAZADO agregando el motivo del rechazo en las observaciones.")
+    @ApiResponse(responseCode = "200", description = "Proceso de rechazo enviado correctamente")
+    public ResponseEntity<Map<String, String>> rechazarVendedor(
         @PathVariable int id,
-        @RequestBody Map<String, String> request // ◄--- Agregado para capturar el JSON de Postman
-) {
-    String observaciones = request != null ? request.getOrDefault("observaciones", "Sin observaciones de administración") : "Rechazado";
-    
-    adminService.rechazarVendedorConObservaciones(id, observaciones);
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "Motivo de rechazo de la postulación",
+            required = false,
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    name = "Ejemplo Observación Rechazo",
+                    value = "{\n  \"observaciones\": \"El documento tributario adjunto no corresponde al RUT ingresado.\"\n}"
+                )
+            )
+        )
+        @RequestBody(required = false) Map<String, String> request
+    ) {
+        String observaciones = request != null ? request.getOrDefault("observaciones", "Sin observaciones de administración") : "Rechazado";
+        adminService.rechazarVendedorConObservaciones(id, observaciones);
 
-    Map<String, String> response = new HashMap<>();
-    response.put("mensaje", "Proceso de rechazo enviado correctamente");
-    response.put("observaciones", observaciones);
+        Map<String, String> response = new HashMap<>();
+        response.put("mensaje", "Proceso de rechazo enviado correctamente");
+        response.put("observaciones", observaciones);
+        return ResponseEntity.ok(response);
+    }
 
-    return ResponseEntity.ok(response);
-}
-//endpoint de reclamos de compradores 
+    // OBTENER RECLAMOS DE COMPRADORES
+    @GetMapping("/reclamos")
+    @Operation(summary = "Obtener reclamos de compradores", description = "Lista todas las quejas o incidencias levantadas por los clientes.")
+    @ApiResponse(responseCode = "200", description = "Reclamos obtenidos correctamente")
+    public ResponseEntity<Map<String, Object>> obtenerReclamos() {
+        List<String> reclamos = adminService.obtenerReclamos();
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", "Reclamos obtenidos correctamente");
+        response.put("total", reclamos.size());
+        response.put("reclamos", reclamos);
+        return ResponseEntity.ok(response);
+    }
 
-@GetMapping("/reclamos")
-public ResponseEntity<Map<String, Object>> obtenerReclamos() {
+    // OBTENER REPORTES SEMANALES DE VENTAS
+    @GetMapping("/reportes/semanales")
+    @Operation(summary = "Obtener reporte semanal de ventas", description = "Genera y extrae las métricas globales de facturación y ventas de la última semana.")
+    @ApiResponse(responseCode = "200", description = "Reporte semanal generado correctamente")
+    public ResponseEntity<Map<String, Object>> obtenerReporteSemanal() {
+        Map<String, Object> reporte = adminService.obtenerReporteSemanal();
+        Map<String, Object> response = new HashMap<>();
+        response.put("mensaje", "Reporte semanal generado correctamente");
+        response.put("reporte", reporte);
+        return ResponseEntity.ok(response);
+    }
 
-    List<String> reclamos = adminService.obtenerReclamos();
-
-    Map<String, Object> response = new HashMap<>();
-    response.put("mensaje", "Reclamos obtenidos correctamente");
-    response.put("total", reclamos.size());
-    response.put("reclamos", reclamos);
-
-    return ResponseEntity.ok(response);
-}
-
-//endpoint de reportes semanales de ventas
-
-@GetMapping("/reportes/semanales")
-public ResponseEntity<Map<String, Object>> obtenerReporteSemanal() {
-
-    Map<String, Object> reporte = adminService.obtenerReporteSemanal();
-
-    Map<String, Object> response = new HashMap<>();
-    response.put("mensaje", "Reporte semanal generado correctamente");
-    response.put("reporte", reporte);
-
-    return ResponseEntity.ok(response);
-}
-// Endpoint de administrador que llama a vendedor :  PUT http://localhost:8082/api/v1/admin/vendedores/1/aprobar
- public void aprobarVendedor(Integer id) {
-
-    System.out.println("ADMIN: enviando solicitud al vendedor ID " + id);
-webClient.put()
-    .uri("http://localhost:8083/api/v1/vendedores/aprobar/{id}", id)
-    .retrieve()
-    .onStatus(status -> status.is4xxClientError(), response ->
-            response.bodyToMono(String.class)
-                    .flatMap(msg -> Mono.error(
-                            new ResourceNotFoundException(msg)
-                    ))
-    )
-    .onStatus(status -> status.is5xxServerError(), response ->
-            response.bodyToMono(String.class)
-                    .flatMap(msg -> Mono.error(
-                            new RuntimeException(msg)
-                    ))
-    )
-    .bodyToMono(Void.class)
-    .block();
-    
-//PUT http://localhost:8082/api/v1/admin/vendedores/1/rechazar
-
-}
+    // MÉTODO DE APOYO INTERNO (Sigue igual, no es un endpoint expuesto mediante HTTP anotado)
+    public void aprobarVendedor(Integer id) {
+        System.out.println("ADMIN: enviando solicitud al vendedor ID " + id);
+        webClient.put()
+            .uri("http://localhost:8083/api/v1/vendedores/aprobar/{id}", id)
+            .retrieve()
+            .onStatus(status -> status.is4xxClientError(), response ->
+                    response.bodyToMono(String.class)
+                            .flatMap(msg -> Mono.error(new ResourceNotFoundException(msg)))
+            )
+            .onStatus(status -> status.is5xxServerError(), response ->
+                    response.bodyToMono(String.class)
+                            .flatMap(msg -> Mono.error(new RuntimeException(msg)))
+            )
+            .bodyToMono(Void.class)
+            .block();
+    }
 }
