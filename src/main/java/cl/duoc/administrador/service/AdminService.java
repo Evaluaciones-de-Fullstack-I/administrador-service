@@ -89,13 +89,12 @@ public void aprobarVendedorConObservaciones(Integer id, String observaciones) {
     requestBody.put("observaciones", observaciones);
 
     webClient.put()
-        .uri("http://localhost:8083/api/v1/vendedores/aprobar/{id}", id) // Puerto local del vendedor
-        .bodyValue(requestBody) // ◄--- Enviamos el mapa con la observación
+        .uri("https://vendedor-service.onrender.com/api/v1/vendedores/aprobar/{id}", id) 
+        .bodyValue(requestBody) 
         .retrieve()
         .bodyToMono(Void.class)
         .block();
-
-    System.out.println(" ADMIN: La solicitud de aprobación para el vendedor ID " + id + " fue enviada con éxito.");
+        System.out.println(" ADMIN: La solicitud de aprobación para el vendedor ID " + id + " fue enviada con éxito.");
 }
 
 //rechazar
@@ -105,11 +104,11 @@ public void rechazarVendedorConObservaciones(Integer id, String observaciones) {
     Map<String, String> requestBody = new HashMap<>();
     requestBody.put("observaciones", observaciones);
     webClient.put()
-            .uri("http://localhost:8083/api/v1/vendedores/rechazar/{id}", id)
-            .bodyValue(requestBody)
-            .retrieve()
-            .bodyToMono(Void.class)
-            .block();
+        .uri("https://vendedor-service.onrender.com/api/v1/vendedores/rechazar/{id}", id)
+        .bodyValue(requestBody)
+        .retrieve()
+        .bodyToMono(Void.class)
+        .block();
 
     System.out.println(" ADMIN:El Vendedor ID " + id + " fue rechazado con éxito .");
 }
