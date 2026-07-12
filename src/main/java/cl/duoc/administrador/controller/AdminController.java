@@ -201,17 +201,36 @@ public class AdminController {
         return ResponseEntity.ok(response);
     }
 
-    // OBTENER RECLAMOS DE COMPRADORES
+   // OBTENER RECLAMOS DE COMPRADORES
     @GetMapping("/reclamos")
-    @Operation(summary = "Obtener reclamos de compradores", description = "Lista todas las quejas o incidencias levantadas por los clientes.")
+    @Operation(summary = "Obtener reclamos de compradores", description = "Se conecta de forma síncrona con el microservicio externo de Carlos para listar todos los reclamos reales.")
     @ApiResponse(responseCode = "200", description = "Reclamos obtenidos correctamente")
+    @ApiResponse(responseCode = "500", description = "Error de comunicación con el servicio de Reclamos")
     public ResponseEntity<Map<String, Object>> obtenerReclamos() {
-        List<String> reclamos = adminService.obtenerReclamos();
-        Map<String, Object> response = new HashMap<>();
-        response.put("mensaje", "Reclamos obtenidos correctamente");
-        response.put("total", reclamos.size());
-        response.put("reclamos", reclamos);
-        return ResponseEntity.ok(response);
+        try {
+            System.out.println("🛰️ Consultando microservicio externo de Reclamos en Render...");
+
+            // LLAMADA SÍNCRONA AL SERVICIO DE CARLOS
+            List<?> listaReclamos = webClient.get()
+                    .uri("https://reclamo-service.onrender.com/api/reclamos")
+                    .retrieve()
+                    .bodyToMono(List.class)
+                    .block(); // .block() hace que espere la respuesta de internet
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Reclamos obtenidos correctamente desde el servicio externo");
+            response.put("total", listaReclamos != null ? listaReclamos.size() : 0);
+            response.put("reclamos", listaReclamos);
+            
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.out.println("❌ Error al conectar con Reclamos: " + e.getMessage());
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("mensaje", "Error de comunicación con el servicio de Reclamos externo");
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 
     // OBTENER REPORTES SEMANALES DE VENTAS
