@@ -212,7 +212,7 @@ public class AdminController {
 
             // LLAMADA SÍNCRONA AL SERVICIO DE CARLOS
             List<?> listaReclamos = webClient.get()
-                    .uri("https://reclamo-service.onrender.com/api/reclamos")
+                    .uri("https://reclamo-service.onrender.com/api/reclamos/pendientes")
                     .retrieve()
                     .bodyToMono(List.class)
                     .block(); // .block() hace que espere la respuesta de internet
